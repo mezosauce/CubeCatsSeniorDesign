@@ -2,8 +2,8 @@
 
 * **Elmoataz Abdellah** Computer Science, abdellea@mail.uc.edu
 * **Matthew Goldsberry** Computer Science, goldsbme@mail.uc.edu
-* **** Computer Science, 
-* **** Computer Science, 
+* **Caden O'Leary** Computer Science, olearycb@mail.uc.edu
+* **Seunghun Lee(Ethan)** Computer Science, lee7su@mail.uc.edu
 
 # HABSat-1 On-Board Computer Subsystem
 
