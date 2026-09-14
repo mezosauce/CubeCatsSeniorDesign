@@ -8,7 +8,7 @@
 
 | Member | Role | Responsibility |
 | --- | --- | --- | 
-| Matthew Goldsberry | OBC Team Lead | Responsible for leading the OBC team (include memebers of the OBC team outside of this senior design group in the club) to make sure we are meeting project deliverable deadlines and requirments. |
+| Matthew Goldsberry | OBC Team Lead (Coordinator) | Responsible for leading the OBC team (including members of the OBC team outside of this senior design group in the club) to make sure we are meeting project deliverable deadlines and requirements for both senior design and HABSat-1's project timeline. |
 | Caden O'Leary | OBC Documentation Owner | Maintains the design report, notebook consistency, and submission formatting. |
 | Elmoataz Abdellah | OBC QA/ Test Owner | Owns test planning and validation against requirements. |
 | Seunghun Lee | OBC Developer / Architect | Technical direction and key design decisions for the OBC software and hardware architecture. | 
