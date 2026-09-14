@@ -11,4 +11,4 @@ In collaboration with the CubeCats organization, this project focuses on the des
 
 # Design Notebook
 
-Our project design notebook is recorded in Google Docs: https://docs.google.com/document/d/1FKvNWf1xkLXfmtQ3VoxUJaoAKvDEfEna3s6TyKDspMo/edit?usp=sharing
+Our project design notebook is recorded in [Google Docs](https://docs.google.com/document/d/1FKvNWf1xkLXfmtQ3VoxUJaoAKvDEfEna3s6TyKDspMo/edit?usp=sharing)
