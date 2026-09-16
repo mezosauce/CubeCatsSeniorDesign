@@ -7,7 +7,7 @@
 * **Seunghun Lee(Ethan)** Computer Science, lee7su@mail.uc.edu
 
 ## Advisor
-**TBD**
+**William Hawkins III** Computer Science Department, hawkinwh@ucmail.uc.edu
 
 ## Project Background
 The HABSat-1 mission is a CubeSat project that aims to monitor harmful algea blooms in the great lakes region.
