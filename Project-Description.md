@@ -5,6 +5,7 @@
 * **Matthew Goldsberry** Computer Science, goldsbme@mail.uc.edu
 * **Caden O'Leary** Computer Science, olearycb@mail.uc.edu
 * **Seunghun Lee(Ethan)** Computer Science, lee7su@mail.uc.edu
+* **Kristen Griessman** Cybersecurity Engineering, griesska@mail.uc.edu 
 
 ## Advisor
 **William Hawkins III** Computer Science Department, hawkinwh@ucmail.uc.edu

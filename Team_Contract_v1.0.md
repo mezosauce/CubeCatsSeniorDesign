@@ -12,6 +12,7 @@
 | Caden O'Leary | OBC Documentation Owner | Maintains the design report, notebook consistency, and submission formatting. |
 | Elmoataz Abdellah | OBC QA/ Test Owner | Owns test planning and validation against requirements. |
 | Seunghun Lee | OBC Developer / Architect | Technical direction and key design decisions for the OBC software and hardware architecture. | 
+| Kristen Griessman | OBC Security Owner | Responsible for ensuring the security of the OBC software and hardware architecture. |
 
 ## Communication Ground Rules
 
@@ -52,19 +53,21 @@ Primary communication will occur in the dedicated project Discord server. Offici
 By signing below, each team member acknowledges that they have read, understood, and agreed to uphold all terms set forth in this contract throughout the duration of the HABSat-1 Flight Software project.
 
 **Caden O’Leary**
-Signature: ____________________________________ Date: ______________
+Signature: ___________Caden O'Leary ____________ Date: __9/15/2026__
 
 **Elmoataz Abdellah**
-Signature: ____________________________________ Date: ______________
+Signature: ___________Elmoataz Abdellah ________ Date: __9/15/2026__
 
 **Matthew Goldsberry**
-Signature: ____________________________________ Date: ______________
+Signature: __________Matthew Goldsberry ________ Date: __9/15/2026__
 
 **Seunghun Lee**
-Signature: ____________________________________ Date: ______________
+Signature: __________Seunghun Lee ______________ Date: __9/15/2026__
 
+**Kristen Griessman**
+Signature: __________Kristen Griessman _________ Date: __9/15/2026__
 
 As the the faculty advisor to this project, I acknowledge that I have reviewed and endorse this team contract. 
 
-**<name>**
-Signature: ____________________________________ Date: ______________
+**William Hawkins III**
+Signature: __[Approved Via Email on 9/15/2026]__ Date: __9/15/2026__
