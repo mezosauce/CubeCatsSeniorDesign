@@ -1,4 +1,5 @@
-# TECHNICAL SPECIFICATION
+# Technical Specification
+
 ## Version and Change Log
 | Version | Date | Change Description | Author |
 | :--- | :--- | :--- | :--- |
@@ -6,8 +7,10 @@
 | 0.2 | 2026-10-08 | Created D1 Detailed Design: embedded non-relational data model, O(1) Pass Execution Sequencer algorithm, Build-vs-Reuse decisions, CAN/UART/SPI/GPIO API contracts, and NASA F' + EnduroSat OBC Type I justifications (Assignment 6). | Matthew Goldsberry, Seunghun Lee, Elmoataz Abdellah, Caden O'Leary, Kristen Griessman |
 | 0.3 | 2026-10-14 | Created D2 Detailed Design: subsystem cardinality models, Ground Station telecommand table (`0x00`–`0x16`), 80 component edge cases (`EC-01`–`EC-80`), design rationale, and peer review action items (Assignment 7). | Kristen Griessman, Elmoataz Abdellah, Caden O'Leary, Matthew Goldsberry, Seunghun Lee |
 | 1.0 | 2026-10-28 | Compiled unified Technical Specification Document for Assignment 9 mapped directly to the Assignment 9 `L0`–`L4` requirements baseline (`L3-OBC-129`–`176`, `L4-OBC-185`–`268`) and `CON-01`–`CON-10`. | Caden O'Leary, Elmoataz Abdellah, Matthew Goldsberry, Seunghun Lee, Kristen Griessman |
+
 ## Architecture Summary
 The HABSat-1 On-Board Computer (OBC) flight software architecture implements a hybrid **Embedded Sensor-Actuator and Layered Pattern** for onboard spacecraft control, paired with a **Client-Server Pattern** for Ground Station command and telemetry links (referencing the **D0 HABSat-1 Data and Power Lines Block Diagram** and **D0 HABSat-1 Protocol Lines Diagram** from Assignment 5).
+
 ### Major System Components
 As defined in the D0 architecture and refined in D1/D2, the avionics and subsystem topology comprises twelve interacting nodes orchestrated by the Main Computer:
 1. **Main Computer (OBC):** Hosted on the EnduroSat OBC Type I board (STM32F407VG ARM Cortex-M4 MCU at 168–180 MHz, 1 MB Flash, 192+4 KB SRAM). Executes FreeRTOS (`L4-OBC-247`) and NASA F' components for the 10-mode Finite State Machine (`L4-OBC-209`), telecommand decryption/validation (`L4-OBC-185`–`196`), 60-second telemetry polling (`L4-OBC-220`), 16-pass imaging sequencer (`L4-OBC-235`–`243`), and triple-watchdog FDIR (`L4-OBC-250`).
@@ -21,13 +24,17 @@ As defined in the D0 architecture and refined in D1/D2, the avionics and subsyst
 9. **Main Downlink Radio (S-Band) & S-Band Antenna:** High-data-rate SPI transmitter connected directly to the Data Processor (**ADR-002**) to downlink segmented multispectral and CI imagery with flow control (`L3-OBC-133`, `L4-OBC-199`–`200`).
 10. **Deployment Mechanisms:** Discrete GPIO-controlled burn-wire release circuits (`PIN_DEP_SOLAR_ACT`, `PIN_DEP_CAMERA_LENS`, `PIN_DEP_ANTENNAS`) with 2.5 A current limiting (`L4-OBC-214`) and 100 ms microswitch debouncing (`L4-OBC-215`).
 11. **Ground Station (GS):** Earth terminal running the Python F' Ground Data System (GDS), an SQLite telemetry/image database (Task 022), and a local JSON API / React monitoring dashboard (Tasks 023–024).
+
 ### Deployment Model & Data Flow
 Flight software is compiled as a statically linked C++17 firmware image deployed onto the Main Computer's internal NOR Flash (with a write-protected golden fallback image in ROM/MRAM per `L3-OBC-166` and `L4-OBC-251`) and a companion firmware image on the RP2350 Data Processor. At runtime, data flows across four hardware bus topologies as shown in the D0 Protocol Lines Diagram:
 - **Control & Housekeeping Flow (CAN 2.0B Bus):** The Main Computer exchanges fixed 12-byte CAN frames with the ADCS Computer, Power Computer, Imager Adapter, and Data Processor. Every 60 seconds, the Main Computer polls health telemetry from all nodes (`L3-OBC-138`, `L4-OBC-220`); asynchronous fault frames (`MSG_PWR_LOW_BATTERY_ALERT`, `MSG_IMG_HARDWARE_FAULT`, `MSG_ADCS_POINTING_TIMEOUT`) preempt background tasks within 100 ms (`L3-OBC-139`, `L4-OBC-222`).
 - **High-Rate Science Data Flow (Camera Link -> UART -> SPI -> S-Band):** Prior to an imaging pass, the Main Computer verifies `SoC >= 20%` and `GSD <= 90 m` (`L4-OBC-237`), then commands ADCS target tracking and Imager warmup over CAN (`L4-OBC-238`). Once `MSG_ADCS_TARGET_ACQUIRED` and `MSG_IMG_WARMUP_READY` assert, the Main Computer triggers burst capture (`L4-OBC-239`) and records synchronized ECEF/LVLH georeference vectors (`L4-OBC-260`). Raw frames stream from the Imager Adapter over UART to the Data Processor (with 3x checksum retry per `L4-OBC-245`) for Cyanobacteria Index calculation (`L4-OBC-244`) and lossless compression (`L4-OBC-223`), and are written over SPI to Data Storage with 32-bit CRCs (`L4-OBC-224`). Upon Ground Station command (`0x11`), the Data Processor streams segmented frames over SPI directly to the S-Band Main Downlink Radio (**ADR-002**, `L4-OBC-199`–`200`).
 - **Telecommand & Beacon Flow (UHF RF <-> UART <-> Main Computer):** Encrypted Ground Station telecommands (`0x00`–`0x16`) arrive at the UHF Radio and pass over UART to the Main Computer, where `Radio_SecurityHandler` decrypts the ASCON-AEAD128 payload (`L4-OBC-185`), verifies the 16-byte authentication tag (`L4-OBC-186`) and sequence counter (`L4-OBC-187`), validates syntax/bounds/mode (`L4-OBC-190`–`192`), and logs/transmits an ACK or NACK (`L4-OBC-194`–`196`).
+
 ## Component Interfaces and Data Formats
+
 ### Wire Framing & Encryption Schemas
+
 #### Internal CAN 2.0B Bus Frame Schema (Fixed 12 Bytes — Main Computer <-> ADCS, EPS, Imager Adapter, Data Processor)
 | Byte Offset | Field Name | Size | Type / Value | Description |
 | :--- | :--- | :--- | :--- | :--- |
@@ -36,6 +43,7 @@ Flight software is compiled as a statically linked C++17 firmware image deployed
 | Bytes 2–9 | `CAN_PAYLOAD` | 8 Bytes | `uint64_t` / `float32[2]` | Fixed 64-bit command arguments, sensor bitmasks, or IEEE 754 float telemetry values. |
 | Byte 10 | `CAN_CRC` | 1 Byte | `uint8_t` (CRC-8-CCITT) | Frame integrity checksum calculated over Bytes 0–9. |
 | Byte 11 | `CAN_ETX` | 1 Byte | `uint8_t` (`0x55`) | End-of-transmission delimiter byte. |
+
 #### Internal UART Frame Schema (10 + N Bytes — Main Computer <-> UHF Radio, Secondary Payload; Imager Adapter <-> Data Processor)
 | Byte Offset | Field Name | Size | Type / Value | Description |
 | :--- | :--- | :--- | :--- | :--- |
@@ -45,6 +53,7 @@ Flight software is compiled as a statically linked C++17 firmware image deployed
 | Byte 7 | `NODE_FRAME_ID` | 1 Byte | `uint8_t` (`0xA1`–`0xD1` / `0x00`–`0x16`) | Target subsystem address/node and frame command/telemetry ID. |
 | Bytes 8 to `7+N` | `PAYLOAD` | `N` Bytes | `uint8_t[N]` | Unencrypted beacon/digipeater payload OR ASCON-AEAD128 encrypted block. |
 | Bytes `8+N` to `9+N` | `CRC16` | 2 Bytes | `uint16_t` (CRC-16-CCITT) | Error-detection CRC across header and payload (`L4-OBC-190`). |
+
 #### ASCON-AEAD128 Encrypted Radio Payload Schema (Up to 255 Bytes Total inside UART/RF Frame)
 | Field | Size | Description |
 | :--- | :--- | :--- |
@@ -52,6 +61,7 @@ Flight software is compiled as a statically linked C++17 firmware image deployed
 | `Header Data (Associated Data)` | 4 Bytes | Unencrypted Cleartext Command/Packet ID (`uint8_t`), Sequence Counter (`uint16_t`), and Target Mode Mask (`uint8_t`) authenticated by AEAD. |
 | `Ciphertext` | Up to 219 Bytes | ASCON-AEAD128 encrypted command parameters or private telemetry payload (Combined Header + Ciphertext <= 223 bytes). |
 | `Authentication Tag` | 16 Bytes (128-bit) | Cryptographic MAC tag verified prior to plaintext parsing (`L4-OBC-186`); invalid tag triggers immediate drop and increments security counter (`L4-OBC-189`, `EC-35`). |
+
 #### In-Memory C++ Data Structures & Ground Station SQLite / JSON Schemas
 - **Onboard Pass Schedule Record (`PassRecord` C++ struct, 24 bytes static — `L4-OBC-235`):**
   `struct PassRecord { uint16_t seq_id; uint32_t acq_start_epoch; uint32_t acq_end_epoch; float target_lat; float target_lon; float target_alt; uint8_t priority; uint8_t status; };` (Statically allocated array `PassRecord pass_queue[16]` on Main Computer per `L4-OBC-248`).
@@ -62,6 +72,7 @@ Flight software is compiled as a statically linked C++17 firmware image deployed
   - `CREATE TABLE command_audit_log (cmd_seq INTEGER PRIMARY KEY, tx_epoch INTEGER, cmd_id INTEGER, encrypted BOOLEAN, ack_status TEXT, err_code INTEGER);`
 - **Ground Station Dashboard JSON Payload Schema (`GET /api/v1/telemetry/latest` — Task 023):**
   `{ "spacecraft_epoch": 1793232000, "operational_mode": "STANDBY", "obc_health": { "cpu_load_pct": 18.5, "sram_used_pct": 42.1, "boot_count": 1, "temp_c": 21.4 }, "pwr_data": { "voltage_mv": 7850, "soc_pct": 88, "time_to_empty_s": 14200, "faults": 0 }, "adcs_data": { "mode": "MINIMAL_DRAG", "pos_ecef_km": [4120.5, -4810.2, 2650.1], "vel_kms": [-3.41, -4.82, 4.79], "faults": 0 }, "imgr_data": { "stored_images": 3, "storage_used_pct": 31.0, "last_pass_outcome": "SUCCESS" } }`
+
 ### Component Boundary Matrix (Inputs, Outputs, Formats, Protocol, Error Behavior)
 | Component Boundary | Inputs (to Target) | Outputs (from Target) | Data Format | Protocol | Error & Edge Case Behavior (D2 Reference) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -75,7 +86,9 @@ Flight software is compiled as a statically linked C++17 firmware image deployed
 | **Main Computer <-> Telemetry/Command Radio (UHF)** | Beacon TX (`0xA1`), Telemetry/Thumbnail Downlink (`0xA2`), Digipeat Stage (`0xA3`). | Uplink Telecommands (`0x00`–`0x16`) and Amateur Repeater frames (`0x02`). | `10+N` Byte UART Frame (with ASCON-AEAD128 payload for non-amateur links). | UART (115.2 kbps, Dynamically Gated) | Uplink reception preempts outgoing beacon/digipeater on half-duplex channel (`EC-34`, `L4-OBC-206`). Oversized packets (>255 B) drop with error (`EC-33`). Failed ASCON-AEAD128 tag drops immediately (`EC-35`, `L4-OBC-189`). |
 | **Main Computer <-> Deployment Mechanisms** | High-to-Low / Low-to-High discrete actuation pulse (`PIN_DEP_SOLAR_ACT`, `PIN_DEP_CAMERA_LENS`, `PIN_DEP_ANTENNAS`). | Microswitch deployment sense feedback (`0` or `1`). | Discrete GPIO Digital Logic (3.3 V CMOS) + PWM current limit. | GPIO | Enforces 30-min post-deployment inhibit timer (`EC-78`, `L4-OBC-213`). PWM clamps burn-wire current to <= 2.5 A (`EC-77`, `L4-OBC-214`). Debounces microswitch over 100 ms and retries up to 2x (`EC-43`, `EC-79`, `L4-OBC-215`). |
 | **Main Computer <-> Secondary Payload** | Ping (`0xB1`), Start Task (`0xB2`), Read Data (`0xB3`). | Frame ACK/NACK (`0xD0`), Experiment Data Packet (`0xD1`). | `10+N` Byte UART Frame. | UART (115.2 kbps) | Rejects corrupted command scripts (`EC-63`). Buffers data locally during high-priority tasks (`EC-62`). Saves state to NVM prior to load-shedding power cut (`EC-64`). |
+
 ### API Endpoint & Command Tables
+
 #### Ground Station <-> Satellite Telecommand Uplink API (UHF Radio -> Main Computer)
 | Cmd ID | Command Name | Direction | Encrypted (ASCON-AEAD128) | Authorized Modes | Request Payload & Operational Behavior | Response / Error Behavior |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -99,6 +112,7 @@ Flight software is compiled as a statically linked C++17 firmware image deployed
 | `0x14` | `Purge Stored Image` | GS -> OBC | `TRUE` | Standby / Downlink (2-Step Confirm) | `uint16_t image_id`. Deletes ground-verified image file in SPI Storage and issues `CMD_IMG_PURGE_BUFFER` (`0x33`, `L3-OBC-147`, `L4-OBC-225`). | Requires secondary confirmation (`L4-OBC-193`); frees storage blocks and returns ACK. |
 | `0x15` | `Send Target Coordinates` | GS -> OBC | `TRUE` | Standby / Checkout | `float32 lat, float32 lon, float32 alt` (12 bytes IEEE 754). Forwards to ADCS (`0x04`–`0x06`, `L4-OBC-234`) and requests updated schedule (`0x07`). | Rejects if Lat outside `[-90, 90]` or Lon outside `[-180, 180]` (`L4-OBC-191`). |
 | `0x16` | `Sync Time` | GS -> OBC | `TRUE` | All Modes | `uint32_t unix_epoch_sec`. Disciplines spacecraft epoch clock when ADCS GPS 1PPS is unavailable (`L3-OBC-143`, `L4-OBC-219`). | Updates RTC without disturbing monotonic pass timeout counter (`L4-OBC-243`). |
+
 #### Internal Subsystem Command, Telemetry & Register API Endpoints (Main Computer <-> Subsystems)
 | Bus / Protocol | Endpoint ID / Pin | Symbol Name | Direction | Type | Payload Schema / Register Format | Functional & Error Behavior |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -122,6 +136,7 @@ Flight software is compiled as a statically linked C++17 firmware image deployed
 | **SPI (Storage)** | `0x0100` / `0x0200` | `DS_WRITE_LOG` / `DS_CHECK_IMAGE_INDEX` | OBC <-> DS | SPI Command | `0x0100`: `uint8_t len` + log struct; `0x0200`: returns `0x01` Stored / `0x00` Pending. | Serialized via FreeRTOS mutex (`EC-70`, `L4-OBC-253`); verifies DP image offload before cutting power (`L4-OBC-211`). |
 | **GPIO (Deploy)** | `PIN_DEP_*` | `PIN_DEP_SOLAR_ACT`, `CAMERA_LENS`, `ANTENNAS` | OBC -> Deploy | Discrete GPIO | Pulse High (`1` for 5 s burn cycle, then `0`); PWM current limit <= 2.5 A (`L4-OBC-214`). | Inhibited during first 30 min uptime (`L4-OBC-213`); debounced 100 ms with 2 retries (`L4-OBC-215`). |
 | **UART (Sec Pay)** | `0xB1`–`0xB3` / `0xD0`–`0xD1` | `SEC_PAY_PING` / `START_TASK` / `READ_DATA` / `ACK` / `DATA_PACKET` | OBC <-> Payload | Command / Resp | `10+N` byte UART frame. | Verifies POST responsiveness (`0xB1`) and polls secondary science data (`0xB3`). |
+
 ## Technology Stack
 | Layer | Technology Choice | License / Version | Justification Tied to Assignment 9 `L3-OBC`, `L4-OBC`, or `CON` IDs |
 | :--- | :--- | :--- | :--- |
@@ -134,6 +149,7 @@ Flight software is compiled as a statically linked C++17 firmware image deployed
 | **Non-Volatile Storage Architecture** | **SPI MRAM** (State/Parameter Store) + **SPI NAND Flash** (Mass Image/Log Store with CRC32 & Bad-Block Remapping) | Hardware / Custom C++ Driver (`Storage_SpaceManager`) | **Satisfies `L3-OBC-144`–`148`, `L4-OBC-212`, `L4-OBC-224`–`230`, and `L4-OBC-264`:** SPI MRAM provides unlimited write endurance and radiation tolerance for 30-second state persistence (`L4-OBC-212`) and parameter tables (`L4-OBC-264`), while SPI NAND Flash retains >=7 multi-band image sets with CRC verification (`L4-OBC-224`) until Ground Station purge confirmation (`L4-OBC-225`). |
 | **Unit Testing & SITL Verification Suite** | **GoogleTest (GTest) + F' STest + Python 3 Hardware-Mocked SITL Harness + GitHub Actions CI** | BSD-3 / Apache 2.0 Open-Source | **Satisfies `CON-02`, `CON-05`, and `L4-OBC-256`:** Directly addresses the LEOPARDSat-1 lesson learned (lack of off-hardware software tests) by mocking CAN, UART, SPI, and GPIO HAL interfaces so developers verify >=80% statement coverage on desktop machines without physical hardware access. |
 | **Ground Station Database & Dashboard Stack** | **Python 3 F' GDS + SQLite 3 (SQLAlchemy ORM) + React TypeScript Dashboard** | Public Domain / MIT Open-Source | **Satisfies `CON-02`, `L3-OBC-132`, `L3-OBC-135`, and `L4-OBC-202` (Tasks 022–026):** Provides a zero-configuration relational store (`habsat_gds.db`) on the Ground Station PC for archiving downlinked `pwr_data`, `adcs_data`, and `imgr_data` packets and serving validated JSON schemas to operator consoles. |
+
 ## Known Constraints and Architectural Impact
 Every constraint inherited from the Week 3 essay (`CON-01` through `CON-10`) directly shapes the technical specification by ruling out specific design alternatives and forcing concrete hardware/software mechanisms:
 | Constraint ID | Constraint Summary | What It Rules Out (Excluded Alternatives) | What It Forces (Mandated Architectural Decisions) |
@@ -148,6 +164,7 @@ Every constraint inherited from the Week 3 essay (`CON-01` through `CON-10`) dir
 | **CON-08** | **Downlink & Telecommand Encryption** | Rules out transmitting raw unauthenticated telecommands or unencrypted private science/error downlinks over UHF/S-Band (`L2-MIS-079`). | Forces **ASCON-AEAD128** encryption and 128-bit authentication tags on all non-amateur commands (`0x00`, `0x01`, `0x03`–`0x16`) and private downlinks (`L3-OBC-129`, `L3-OBC-130`, `L4-OBC-185`–`189`). |
 | **CON-09** | **Critical Command Multi-Step Validation** | Rules out single-packet immediate execution of destructive or high-risk commands (`0x05`, `0x06`, `0x07`, `0x09`, `0x14`). | Forces a secondary confirmation check in the command dispatcher (`L4-OBC-193`) prior to executing processor reboots, power rail cycles, RF inhibits, Emergency Mode entry, or image deletion (`L4-OBC-225`). |
 | **CON-10** | **Subsystem Fault Isolation** | Rules out daisy-chaining all subsystems on unprotected always-active serial lines without bus recovery or load-shedding switches. | Forces multi-drop CAN 2.0B with hardware CRC and 3x controller reset (`EC-68`, `L3-OBC-160`, `L4-OBC-252`), sequential EPS peripheral power-rail isolation (`L4-OBC-263`), dynamic UART line gating, and EPS-to-UHF backup beacon failover (`ADR-004`). |
+
 ## Traceability Matrix
 The Traceability Matrix below uses the exact required 5-column format (`Req ID | Description | Design Component (D0/D1/D2) | Status | Test Case`), mapping every OBC requirement from the Assignment 9 tab (`L3-OBC-129` through `L3-OBC-176` and `L4-OBC-185` through `L4-OBC-268`), the upstream `L0`–`L2` mission/system requirements (`L0-PRJ-001` through `L2-MIS-084`), and the Week 3 constraints (`CON-01` through `CON-10`) to their D0/D1/D2 design components and Week 10 Test Case IDs (`TC-###`).
 | Req ID | Description | Design Component (D0/D1/D2) | Status | Test Case |
@@ -335,6 +352,7 @@ The Traceability Matrix below uses the exact required 5-column format (`Req ID |
 | CON-08 | Security Constraint 1: Encrypt downlink payload data and non-amateur commands (`L2-MIS-079`, `L3-OBC-129`, `L4-OBC-185`). | D1/D2: ASCON-AEAD128 Encryption on Commands (`0x00`–`0x01`, `0x03`–`0x16`) and Downlinks (`DL-05`, `DL-06`, `DL-10`, `DL-11`) | In progress | TC-308 |
 | CON-09 | Security Constraint 2: Require additional validation for critical spacecraft commands before execution (`L4-OBC-193`). | D1/D2: Critical Command Two-Step Confirmation Guard (`L4-OBC-193`) & Ground-Verified Image Purge (`L4-OBC-225`) | Designed | TC-309 |
 | CON-10 | Security Constraint 3: Isolate faults within individual subsystems so one failure cannot compromise the OBC (`L3-OBC-160`, `L4-OBC-263`). | D0: `ADR-004` EPS-to-Radio Failover; D1/D2: CAN 3x Reset (`L4-OBC-252`), EPS Node Isolation (`L4-OBC-263`), Dynamic UART Gating | Designed | TC-310 |
+
 ## Record of Advisor Review
 **Faculty Advisor:** Dr. Will Hawkins III, Department of Computer Science, University of Cincinnati (`hawkinwh@ucmail.uc.edu`)
 | Review Session & Date | Attendees | Artifacts & Topics Reviewed | Advisor Feedback & Key Recommendations | Resulting Architectural & Document Actions Taken |

@@ -1,4 +1,5 @@
-# REQUIREMENTS DOCUMENT
+# Requirements Document
+
 ## Version and Change Log
 | Version | Date | Change Description | Author |
 | :--- | :--- | :--- | :--- |
@@ -6,9 +7,12 @@
 | 0.2 | 2026-09-28 | Added Week 4 stakeholders, user stories (`US-01` through `US-04`), use case `UC-01`, acceptance criteria (`AC-01.1` through `AC-01.3`), and initial L4 OBC requirements draft. | Caden O'Leary, Matthew Goldsberry, Elmoataz Abdellah |
 | 0.3 | 2026-10-14 | Expanded L3 (`L3-OBC-129` to `L3-OBC-176`) and L4 (`L4-OBC-185` to `L4-OBC-268`) OBC requirements for D1/D2 subsystem interfaces, ASCON-AEAD128 command authentication, Data Processor offloading, and watchdog fault recovery. Withdrew draft requirements No. 177–184 (`L3-OBC-177` through `L3-OBC-184`) without renumbering to preserve stable IDs. | Seunghun Lee, Kristen Griessman, Matthew Goldsberry |
 | 1.0 | 2026-10-28 | Finalized Assignment 9 Requirements Document using the `L0`–`L4` requirements baseline. Documented formal opt-out of the MoSCoW summary in favor of CubeCats modal-verb requirement formatting (`"shall"` / `"should"`), separated Functional and Non-Functional `L3-OBC`/`L4-OBC` requirement tables, mapped Week 3 constraints (`CON-01` to `CON-10`), and logged assumptions and open questions. | Caden O'Leary, Elmoataz Abdellah, Matthew Goldsberry, Seunghun Lee, Kristen Griessman |
+
 ## Purpose and Scope
+
 ### Purpose
 In collaboration with the University of Cincinnati CubeCats organization, this Requirements Document establishes the functional, non-functional, interface, and regulatory baseline for the initial prototype flight software of the On-Board Computer (OBC) on the HABSat-1 3U CubeSat mission. HABSat-1 is designed to capture multispectral imagery (620 nm, 650 nm, 680 nm, and 708 nm wavelengths with a 10 nm FWHM bandwidth) and truth imagery of Harmful Algal Blooms (HABs) in Lake Erie from Low Earth Orbit (LEO) at a Ground Sampling Distance (GSD) below 90 meters per pixel (`L0-PRJ-001`, `L1-SCI-008`, `L1-SCI-009`). This document governs flight software implementation, software-in-the-loop (SITL) and hardware-in-the-loop (HITL) verification, and Preliminary Design Review (PDR) evaluation.
+
 ### Scope
 The HABSat-1 OBC flight software executes on the primary Main Computer (EnduroSat OBC Type I board with an STM32F407VG ARM Cortex-M4 microcontroller running FreeRTOS and the NASA F' framework) and coordinates with the dedicated secondary Data Processor (RP2350 coprocessor). Within scope for the OBC flight software are:
 - **Command and Data Handling (CDH):** Receiving, decrypting (`L3-OBC-129`, `L4-OBC-185`), authenticating (`L3-OBC-130`, `L4-OBC-186`–`189`), validating (`L3-OBC-131`, `L4-OBC-190`–`193`), queuing (`L3-OBC-168`, `L4-OBC-197`–`198`), and dispatching uplinked telecommands from the Ground Station, and returning positive/negative acknowledgments (`L3-OBC-132`, `L4-OBC-194`–`196`).
@@ -16,7 +20,9 @@ The HABSat-1 OBC flight software executes on the primary Main Computer (EnduroSa
 - **Subsystem Orchestration & Health Monitoring:** Polling telemetry from all onboard subsystems every 60 seconds (`L3-OBC-138`, `L4-OBC-220`–`221`, `L4-OBC-231`–`233`) and handling asynchronous fault alerts within 100 ms (`L3-OBC-139`, `L4-OBC-222`) across the ADCS, Power Computer (EPS), Imager Adapter, Data Processor, Data Storage, UHF Telemetry/Command Radio, S-Band Main Downlink Radio, Secondary Payload, and Deployment Mechanisms.
 - **On-Board Science Processing & Storage Management:** Commanding Cyanobacteria Index (CI) calculation on the Data Processor (`L3-OBC-167`, `L4-OBC-244`–`246`), tagging images with synchronized ECEF position and LVLH attitude metadata (`L3-OBC-173`, `L4-OBC-260`), performing lossless compression and CRC verification (`L3-OBC-146`, `L4-OBC-223`–`224`), and retaining captured images in non-volatile memory until an explicit Ground Station purge command is received (`L3-OBC-147`, `L4-OBC-225`).
 - **Fault Detection, Isolation, and Recovery (FDIR):** Managing hardware watchdog timers (`L4-OBC-250`, `L4-OBC-258`), internal bus fault recovery and node isolation (`L3-OBC-160`, `L4-OBC-252`, `L4-OBC-263`), golden-image boot recovery (`L3-OBC-166`, `L4-OBC-251`), and autonomous Safe Mode transitions (`L3-OBC-161`–`162`, `L4-OBC-254`–`255`).
+
 ## Stakeholders and User Goals from Week 4
+
 ### Stakeholder Classification
 | Stakeholder | Category | Primary Role & Interest in HABSat-1 OBC |
 | :--- | :--- | :--- |
@@ -24,11 +30,13 @@ The HABSat-1 OBC flight software executes on the primary Main Computer (EnduroSa
 | Environmental data researcher | Secondary | Relies on radiometrically accurate, georeferenced multispectral imagery and Cyanobacteria Index maps downlinked from HABSat-1 to analyze harmful algal blooms in the Great Lakes. |
 | Future club members | Secondary | Inherits the HABSat-1 flight software repository, NASA F' architecture, hardware-mocked unit test suite, and onboarding documentation for subsequent CubeCats satellite missions. |
 | Amateur radio operator | Hidden | Receives unencrypted 49-second UHF housekeeping beacons and utilizes the spacecraft's UHF amateur radio repeater in accordance with amateur radio regulations. |
+
 ### User Stories (Week 4 Baseline)
 - **US-01 (Primary — Satellite Operator):** As a satellite operator, I want to send authorized commands to HABSat-1 and receive confirmation that the commands were processed, so that I can control spacecraft operations and verify that the satellite received my instructions.
 - **US-02 (Secondary — Environmental Data Researcher):** As an environmental data researcher, I want HABSat-1 to collect multispectral images with their corresponding observation time and mission data, so that I can use the collected data to analyze harmful algae blooms in the Great Lakes.
 - **US-03 (Secondary — Future Club Members):** As a future CubeCats member working on the next satellite mission, I want to be able to learn from the HABSat-1 flight software documentation and development decisions, so that I can understand how the previous mission was designed and use that knowledge when developing the next satellite.
 - **US-04 (Hidden — Amateur Radio Operator):** As a licensed amateur radio operator communicating with HABSat-1, I want to understand and follow the satellite's communication requirements and procedures, so that I can communicate with the satellite in accordance with the mission's operating procedures and applicable amateur radio regulations.
+
 ### Core Use Case & Acceptance Criteria (`UC-01`: Send and Process Spacecraft Command)
 - **Story:** `US-01` | **Primary Actor:** Satellite Operator | **Secondary Actors:** Ground Station, HABSat-1 On-Board Computer (OBC), Satellite Subsystem
 - **Preconditions:**
@@ -67,6 +75,7 @@ The HABSat-1 OBC flight software executes on the primary Main Computer (EnduroSa
   - **AC-01.1 (Successful Command):** Given the OBC is running, the ground station has an established communication link, and the satellite operator is authorized to send a command that is valid for the current mission flight state, when the satellite operator sends the command to HABSat-1, then the OBC shall validate the command, route it to the appropriate subsystem, and provide the ground station with the command's execution status.
   - **AC-01.2 (Scheduled Command):** Given the OBC is running and receives a valid command with a valid future execution time, when the scheduled execution time is reached, then the OBC shall execute the command and record the resulting execution status.
   - **AC-01.3 (Invalid Command):** Given the OBC receives a command that is malformed, unauthorized, unsupported, or invalid for the current mission flight state, when the OBC validates the command, then the OBC shall reject the command, shall not send it to the affected subsystem, and shall record the reason for rejection.
+
 ## Glossary of Domain Terms and Role Names
 | Term / Role Name | Definition |
 | :--- | :--- |
@@ -123,12 +132,15 @@ The HABSat-1 OBC flight software executes on the primary Main Computer (EnduroSa
 | **UART (Universal Asynchronous Receiver-Transmitter)** | An asynchronous serial protocol used for variable-length framed data exchange with the UHF Telemetry/Command Radio, Secondary Payload, and Imager-to-DP stream. |
 | **VSWR (Voltage Standing Wave Ratio)** | A measure of radio-frequency impedance matching at the antenna feed (`EC-41`). |
 | **WDT (Watchdog Timer)** | Hardware and software countdown timers that trigger a processor reboot or Safe Mode transition if not deterministically strobed within their timeout window (`L4-OBC-250`, `L4-OBC-258`). |
+
 ## Functional and Non-Functional Requirements
+
 ### Requirements Language & MoSCoW Opt-Out Acknowledgment
 The HABSat-1 project defines requirements using standard aerospace modal verbs to denote requirement criticality, **formally opting out of the MoSCoW prioritization framework** in favor of our hierarchical requirement formatting:
 - **`"... shall ..."` (Mandatory Requirement):** This requirement must be met by the system or project, or the system will be considered to have failed.
 - **`"... should ..."` (Recommended Requirement):** It is strongly recommended to comply with this requirement, but the project will not fail if it is not met.
 - **Stable ID & Withdrawal Policy:** Every requirement carries a permanent identifier (`No.` and `L#-XXX-###`). IDs are stable and never reused: when draft requirements `No. 177` through `184` (`L3-OBC-177` to `L3-OBC-184`) were withdrawn during the D1/D2 transition to the dedicated Data Processor architecture, their numbers were permanently retired rather than renumbering `L4-OBC-185` through `L4-OBC-268`.
+
 ### Requirement Levels & Verification Methods
 | Level | Type | Definition / Scope |
 | :--- | :--- | :--- |
@@ -143,6 +155,7 @@ The HABSat-1 project defines requirements using standard aerospace modal verbs t
 | **Demonstration** | Use of a realized end product to show that a set of stakeholder expectations can be achieved. |
 | **Inspection** | Visual examination of a realized end product to validate physical design features or specific manufacturer identification. |
 | **Test** | Use of a realized end product to obtain detailed data to validate performance or to provide sufficient information to validate performance through further analysis. |
+
 ### Parent Mission and System Requirements Driving the OBC (`L0`–`L2`)
 | No. | Owner | ID | Name | Description | Rationale & Source Story | Verification Method | Parents |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -186,6 +199,7 @@ The HABSat-1 project defines requirements using standard aerospace modal verbs t
 | 82 | MIS | L2-MIS-082 | Command Acknowledgement & Rejection Reporting | The CubeSat shall transmit an execution confirmation or a command-rejection status with an error reason to the Ground Station for every telecommand received. | Requires positive confirmation of executed or rejected commands. (`US-01`) | Demonstration, Test | L1-MIS-015 |
 | 83 | MIS | L2-MIS-083 | Time-Tagged Scheduled Command Execution | The CubeSat shall support receiving, queuing, and autonomously executing time-tagged telecommands at ground-specified future epoch timestamps. | Allows uplink of time-tagged commands in advance for execution over target regions. (`US-01`, `US-02`) | Demonstration, Test | L1-MIS-015 |
 | 84 | MIS | L2-MIS-084 | Verified Handshake Image Purging | The CubeSat shall retain captured image files in non-volatile memory until an explicit purge command is received from the Ground Station. | Prevents loss of science data if downlink pass experiences signal dropouts. (`US-01`, `US-02`) | Demonstration, Test | L1-MIS-015 |
+
 ### OBC Functional Requirements Table (`L3`–`L4`)
 | No. | Owner | ID | Name | Description ("The OBC shall/should...") | Rationale & Source Story | Verification Method | Parents |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -287,6 +301,7 @@ The HABSat-1 project defines requirements using standard aerospace modal verbs t
 | 264 | OBC | L4-OBC-264 | Non-Volatile Parameter Table Management | The OBC shall store configurable operational thresholds, timeouts, and calibration coefficients in a non-volatile parameter table that can be updated individually via telecommand and restored to default values upon command. | Allows low-bandwidth tuning of mission thresholds and algorithm weights in a single pass without risking a full software reflash. (`US-01`) | Test, Demonstration | L3-OBC-175 |
 | 265 | OBC | L4-OBC-265 | Chunked Software Image Staging | The OBC should receive segmented flight software update binaries over the telecommand link, assemble them in non-volatile staging memory, and report missing segment indices to the Ground Station. | Enables reliable upload of flight software patches across multiple short Ground Station passes. (`US-01`, `US-03`) | Test, Demonstration | L3-OBC-176 |
 | 266 | OBC | L4-OBC-266 | Staged Software Signature Verification | The OBC bootloader should verify the cryptographic signature and cyclic redundancy check of a staged software image prior to installation and automatically roll back to the golden image if the new image fails to receive a ground confirmation command within 24 hours. | Prevents corrupted or faulty software updates from permanently disabling spacecraft communications or operations. (`US-01`, `US-03`) | Test, Demonstration | L3-OBC-166, L3-OBC-176 |
+
 ### OBC Non-Functional Requirements Table (`L3`–`L4`)
 | No. | Owner | ID | NFR Category & Name | Description ("The OBC shall/should..." with Measurable Condition) | Rationale & Source Story | Verification Method | Parents |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -325,6 +340,7 @@ The HABSat-1 project defines requirements using standard aerospace modal verbs t
 | 263 | OBC | L4-OBC-263 | **Reliability:** Faulted Bus Node Isolation | If an internal shared communication bus remains unresponsive after 3 local controller reset attempts, the OBC shall sequentially command the Power Subsystem to disable non-essential subsystem rails to isolate the faulted node. | On a shared multi-drop bus such as CAN, a single latched peripheral node can pull the entire bus dominant; isolating non-essential nodes restores critical communications with the Power and ADCS subsystems. (`US-01`) | Test | L3-OBC-160, L3-OBC-161 |
 | 267 | OBC | L4-OBC-267 | **Usability:** Umbilical Diagnostic Command Interface | The OBC shall provide an external wired serial diagnostic interface that supports real-time telemetry readout, manual command injection, and pre-launch state verification when the spacecraft is fully integrated. | Enables ground engineers and club members to run checkout tests and inspect spacecraft state after final mechanical integration without using RF links. (`US-03`) | Inspection, Test | L3-OBC-172 |
 | 268 | OBC | L4-OBC-268 | **Usability:** Umbilical Flight Software Flashing | The OBC shall expose hardware programming lines through the external umbilical interface to allow reflashing the Main Computer and Data Processor while the spacecraft is fully integrated. | Allows late-stage software fixes prior to dispenser integration without disassembling the CubeSat structure. (`US-03`) | Inspection, Test | L3-OBC-172 |
+
 ## Criticality Classification & Scope Boundaries (Opt-Out of MoSCoW Summary)
 As stated in Section 5.1, **we have opted out of the MoSCoW summary in favor of our modal-verb requirement formatting (`"shall"` vs. `"should"`) across the `L0`–`L4` requirement hierarchy**. To maintain strict scope governance for our release and ensure excluded capabilities cannot creep back in, our Assignment 9 requirements map to the following scope boundaries:
 - **Mandatory Requirements (`"... shall ..."`):** All `"shall"` requirements in the baseline (`L3-OBC-129` through `L3-OBC-131`, `L3-OBC-133`, `L3-OBC-135`, `L3-OBC-137`–`150`, `L3-OBC-152`–`162`, `L3-OBC-164`–`165`, `L3-OBC-168`–`174`, `L4-OBC-185`–`258`, `L4-OBC-260`–`264`, `L4-OBC-267`–`268`). Failure to satisfy any `"shall"` requirement constitutes system failure.
@@ -335,6 +351,7 @@ As stated in Section 5.1, **we have opted out of the MoSCoW summary in favor of 
   3. **No Direct ADCS-to-Imager Triggering Bypassing the Main Computer:** Direct triggering would bypass the centralized SoC (`>= 20%`), GSD (`<= 90 m`), and fault checks (`L4-OBC-237`) managed by the Main Computer.
   4. **No Dynamic Heap Memory Allocation (`malloc`, `new`) During Flight Operations:** Strictly prohibited by `L4-OBC-248` to prevent heap fragmentation and out-of-memory kernel panics.
   5. **No Proprietary Flight OS or Closed Toolchains:** Commercial platforms such as VxWorks are ruled out by `CON-01` and `CON-02`.
+
 ## Inherited Constraints (from Week 3 Essay)
 | Constraint ID | Category | Constraint Statement (from Week 3 Essay) |
 | :--- | :--- | :--- |
@@ -348,6 +365,7 @@ As stated in Section 5.1, **we have opted out of the MoSCoW summary in favor of 
 | **CON-08** | Security | Payload data and non-amateur telecommands must be encrypted on downlinks/uplinks to prevent foreign or unauthorized actors from accessing sensitive data or spoofing commands (`L2-MIS-079`, `L3-OBC-129`). |
 | **CON-09** | Security | Critical spacecraft commands shall require additional validation before execution to reduce the risk of accidental or malicious commands (`L4-OBC-193`). |
 | **CON-10** | Security | The flight software shall isolate faults within individual subsystems to prevent a failure in one subsystem from unnecessarily compromising the operation of the OBC or other spacecraft subsystems (`L3-OBC-160`, `L4-OBC-263`). |
+
 ## Assumptions and Open Questions
 | ID | Type | Description | Related Requirement IDs | Owner | Target Resolution Date |
 | :--- | :--- | :--- | :--- | :--- | :--- |

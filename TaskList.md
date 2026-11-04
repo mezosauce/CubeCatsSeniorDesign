@@ -1,12 +1,9 @@
-# HABSat-1 Flight Software Task List
+# Task List
 
 **Project:** CubeCats Senior Design – HABSat-1 Flight Software  
 **Team Members:** Caden O'Leary, Elmoataz Abdellah, Matthew Goldsberry, Seunghun Lee, Kristen Griessman  
 
----
-
 ## Team Assignment Summary
-
 | Team Member | Subsystem / Domain Focus | Total Tasks Assigned |
 | :--- | :--- | :---: |
 | **Caden O'Leary** | Power Subsystem, Watchdog Petting, Ground Station Packet Decoding | 6 |
@@ -15,10 +12,7 @@
 | **Seunghun Lee** | Reprogrammability, Imager Adapter, Data Storage & Wear-Leveling | 6 |
 | **Kristen Griessman** | Ground Station API Schemas, End-to-End Pipeline Validation | 2 |
 
----
-
 ## Master Task Table
-
 | Task ID | Description | Subsystem / Component | Assignee | Status |
 | :--- | :--- | :--- | :--- | :---: |
 | **Task 001** | Design the static memory buffer allocation scheme for the `pyld_data` and `imgr_data` queues on the Main Computer. | Main Computer | Matthew Goldsberry | Pending |
@@ -48,8 +42,6 @@
 | **Task 025** | Refine the Ground Station packet decoding logic to handle fragmented `pyld_data` transmissions stored in the Data Storage module. | Ground Station | Caden O'Leary | Pending |
 | **Task 026** | Validate the end-to-end data pipeline from the Main Computer's buffer to the Ground Station's database during a simulated pass execution. | End-to-End Mission Pipeline | Kristen Griessman | Pending |
 | **Task 027** | Test the inter-process communication serialization between the Main Computer and Data Processor modules under maximum telemetry load. | Main Computer / Data Processor | Matthew Goldsberry | Pending |
-
----
 
 ## Detailed Task Checklist
 
