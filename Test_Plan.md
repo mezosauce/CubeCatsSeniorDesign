@@ -1,4 +1,8 @@
-# Test Plan
+# Assignment 10: Test Plan
+
+**Authors:** Caden O'Leary, Elmoataz Abdellah, Matthew Goldsberry, Seunghun Lee, Kristen Griessman  
+
+---
 
 ## What is being tested this cycle, by requirement ID and component, and what is not
 
